@@ -1,6 +1,5 @@
 {
   "framework": "python",
   "buildCommand": "pip install -r requirements.txt",
-  "devCommand": "uvicorn app.main:app --reload",
-  "port": 8000
+  "devCommand": "uvicorn app.main:app --reload"
 }
