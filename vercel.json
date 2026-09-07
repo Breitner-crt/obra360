@@ -1,5 +1,6 @@
 {
   "framework": "python",
+  "rootDirectory": "backend",
   "buildCommand": "pip install -r requirements.txt",
   "devCommand": "uvicorn app.main:app --reload"
 }
