@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg/
+.pytest_cache/
+.env
+venv/
+env/
+ENV/
+
+# Secrets and credentials
+*.env.local
+*.env.*.local
+
+# Vercel
+.vercel/
+
+# Database
+supabase/seed.sql  # Opcional, si no quieres subir datos de seed
+
+# OS
+.DS_Store
