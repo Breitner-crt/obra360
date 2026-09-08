@@ -17,9 +17,12 @@ class ActivityCreate(BaseModel):
     status: str = "planificada"
     start_date: Optional[date] = None
     end_date: Optional[date] = None
-    duration_days: Optional[int] = None
+    duration_days: Optional[int] = Field(default=None, ge=0)
     progress_percent: int = Field(default=0, ge=0, le=100)
     weight_percent: float = Field(default=0, ge=0, le=100)
+    quantity: float = Field(default=0, ge=0)
+    unit: Optional[str] = None
+    unit_cost: float = Field(default=0, ge=0)
     assigned_to: Optional[UUID] = None
     sort_order: int = 0
 
@@ -31,9 +34,12 @@ class ActivityUpdate(BaseModel):
     status: Optional[str] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
-    duration_days: Optional[int] = None
+    duration_days: Optional[int] = Field(default=None, ge=0)
     progress_percent: Optional[int] = Field(default=None, ge=0, le=100)
     weight_percent: Optional[float] = Field(default=None, ge=0, le=100)
+    quantity: Optional[float] = Field(default=None, ge=0)
+    unit: Optional[str] = None
+    unit_cost: Optional[float] = Field(default=None, ge=0)
     assigned_to: Optional[UUID] = None
     sort_order: Optional[int] = None
 

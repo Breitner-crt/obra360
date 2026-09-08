@@ -3,7 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import { api } from '../api.js'
 import Gantt from '../components/Gantt.jsx'
 
-const EMPTY = { name: '', parent_id: '', start_date: '', end_date: '', weight_percent: 0 }
+const EMPTY = { name: '', parent_id: '', start_date: '', end_date: '', duration_days: '', quantity: '', unit: '', unit_cost: '', weight_percent: 0 }
+const UNITS = ['', 'm', 'm2', 'm3', 'kg', 'und', 'glb', 'hh', 'día', 'mes']
 
 export default function ProjectDetail() {
   const { id } = useParams()
@@ -43,12 +44,21 @@ export default function ProjectDetail() {
     e.preventDefault()
     setError('')
     try {
+      let duration = form.duration_days === '' ? null : Number(form.duration_days)
+      if (duration === null && form.start_date && form.end_date) {
+        const ms = new Date(form.end_date) - new Date(form.start_date)
+        if (!isNaN(ms) && ms >= 0) duration = Math.round(ms / 86400000) + 1
+      }
       await api.createActivity({
         project_id: id,
         name: form.name,
         parent_id: form.parent_id || null,
         start_date: form.start_date || null,
         end_date: form.end_date || null,
+        duration_days: duration,
+        quantity: form.quantity === '' ? 0 : Number(form.quantity),
+        unit: form.unit || null,
+        unit_cost: form.unit_cost === '' ? 0 : Number(form.unit_cost),
         weight_percent: Number(form.weight_percent) || 0,
       })
       setForm(EMPTY)
@@ -81,6 +91,16 @@ export default function ProjectDetail() {
     load()
   }
 
+  const durationOf = (n) => {
+    if (n.duration_days !== null && n.duration_days !== undefined && n.duration_days !== '') return `${n.duration_days}d`
+    if (n.start_date && n.end_date) {
+      const ms = new Date(n.end_date) - new Date(n.start_date)
+      if (!isNaN(ms) && ms >= 0) return `${Math.round(ms / 86400000) + 1}d`
+    }
+    return '—'
+  }
+  const costOf = (n) => (Number(n.quantity) || 0) * (Number(n.unit_cost) || 0)
+
   const renderNode = (n, depth = 0) => (
     <div key={n.id}>
       <div className="row" style={{ padding: '6px 0 6px ' + depth * 24 + 'px', borderBottom: '1px solid #f1f5f9' }}>
@@ -90,6 +110,13 @@ export default function ProjectDetail() {
         <span style={{ fontSize: 13 }}>{n.progress_percent}%</span>
         <span style={{ fontSize: 12, color: '#64748b' }}>
           {n.start_date || '—'} → {n.end_date || '—'}
+        </span>
+        <span style={{ fontSize: 12, minWidth: 48 }} title="Duración en días (tiempo, alimenta el Gantt)">{durationOf(n)}</span>
+        <span style={{ fontSize: 12, minWidth: 90 }} title="Metrado: cantidad × unidad">
+          {(Number(n.quantity) || 0) ? `${n.quantity} ${n.unit || ''}`.trim() : '—'}
+        </span>
+        <span style={{ fontSize: 12, minWidth: 90 }} title="Costo total = cantidad × PU">
+          {costOf(n) ? `S/ ${costOf(n).toLocaleString('es-PE', { minimumFractionDigits: 2 })}` : '—'}
         </span>
         <button className="small ghost" onClick={() => setStatus(n, 'en_progreso')}>Iniciar</button>
         <button className="small ghost" onClick={() => setStatus(n, 'completada')}>Completar</button>
@@ -145,10 +172,34 @@ export default function ProjectDetail() {
               onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
           </label>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
-            Peso %
+            Peso % (pond.)
             <input type="number" min="0" max="100" value={form.weight_percent}
               onChange={(e) => setForm({ ...form, weight_percent: e.target.value })}
-              title="Peso %" style={{ width: 84 }} />
+              title="Ponderación 0-100 para el avance (NO es masa ni duración)" style={{ width: 84 }} />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
+            Duración (días)
+            <input type="number" min="0" value={form.duration_days}
+              onChange={(e) => setForm({ ...form, duration_days: e.target.value })}
+              title="Tiempo estimado. Si se deja vacío se calcula de inicio-fin." style={{ width: 90 }} placeholder="auto" />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
+            Cantidad
+            <input type="number" min="0" step="0.01" value={form.quantity}
+              onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+              title="Metrado: cantidad" style={{ width: 100 }} placeholder="0" />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
+            Unidad
+            <select value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })}>
+              {UNITS.map((u) => <option key={u} value={u}>{u || '—'}</option>)}
+            </select>
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
+            PU S/
+            <input type="number" min="0" step="0.01" value={form.unit_cost}
+              onChange={(e) => setForm({ ...form, unit_cost: e.target.value })}
+              title="Precio unitario. Total = cantidad × PU" style={{ width: 110 }} placeholder="0.00" />
           </label>
           <button type="submit">Agregar</button>
         </form>
@@ -158,6 +209,9 @@ export default function ProjectDetail() {
           <span>Estado</span>
           <span>Avance</span>
           <span>Fechas</span>
+          <span style={{ minWidth: 48 }}>Durac.</span>
+          <span style={{ minWidth: 90 }}>Metrado</span>
+          <span style={{ minWidth: 90 }}>Costo</span>
           <span>Acciones</span>
         </div>
         {tree.map((n) => renderNode(n))}

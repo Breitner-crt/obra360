@@ -17,6 +17,9 @@ class Activity(TimeStampedModel):
     duration_days = Column(Integer, nullable=True)
     progress_percent = Column(Integer, nullable=False, default=0)
     weight_percent = Column(DECIMAL(5, 2), nullable=False, default=0)
+    quantity = Column(DECIMAL(15, 2), nullable=False, default=0)
+    unit = Column(String(20), nullable=True)
+    unit_cost = Column(DECIMAL(15, 2), nullable=False, default=0)
     assigned_to = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     sort_order = Column(Integer, nullable=False, default=0)
 
