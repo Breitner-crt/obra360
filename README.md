@@ -38,6 +38,8 @@ OBRA360/
 | `companies` | Empresas constructoras |
 | `users` | Usuarios con roles (admin, gerente, supervisor, bodega, consulta) |
 | `projects` | Obras/proyectos con WBS, status, presupuesto |
+| `activities` | Ítems WBS jerárquicos (parent_id, wbs_code auto, avance %) |
+| `activity_dependencies` | Dependencias FS/SS/FF/SF con lag entre actividades |
 
 ### Row Level Security (RLS):
 
@@ -90,6 +92,11 @@ uvicorn app.main:app --reload
 | `GET` | `/api/v1/projects/` | Listar obras de empresa |
 | `GET` | `/api/v1/projects/{id}` | Obtener obra |
 | `GET` | `/api/v1/check/` | Verificar API |
+| `POST/GET` | `/api/v1/activities/` | Crear/listar actividades de obra |
+| `GET` | `/api/v1/activities/tree` | Árbol WBS jerárquico |
+| `GET/PUT/DELETE` | `/api/v1/activities/{id}` | Ver/actualizar/eliminar actividad |
+| `POST/GET` | `/api/v1/dependencies/` | Crear/listar dependencias FS/SS/FF/SF |
+| `GET` | `/api/v1/projects/{id}/progress` | Avance ponderado de la obra |
 
 ### Autenticación:
 
@@ -159,7 +166,7 @@ OBRA360 se está construyendo en 8 fases:
 | Fase | Enfoque | Status |
 |------|---------|--------|
 | **FASE 1** | Autenticación + Empresas + Obras + Dashboard | ✅ **Completado** |
-| FASE 2 | WBS + Actividades + Dependencias + Gantt | 📋 Por iniciar |
+| FASE 2 | WBS + Actividades + Dependencias + Gantt | ✅ **Completado** |
 | FASE 3 | Recursos (Personal + Materiales + Maquinaria) | 📋 Por iniciar |
 | FASE 4 | Supervisión + Registro Diario + Bitácora | 📋 Por iniciar |
 | FASE 5 | Costos + Presupuesto + Compras | 📋 Por iniciar |
