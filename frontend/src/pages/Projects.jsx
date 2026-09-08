@@ -6,7 +6,9 @@ export default function Projects() {
   const [companies, setCompanies] = useState([])
   const [companyId, setCompanyId] = useState('')
   const [projects, setProjects] = useState([])
+  const [prog, setProg] = useState({})
   const [name, setName] = useState('')
+  const [client, setClient] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -18,52 +20,67 @@ export default function Projects() {
 
   useEffect(() => {
     if (!companyId) return
-    api.projects(companyId).then(setProjects).catch((e) => setError(e.message))
+    api.projects(companyId)
+      .then(async (ps) => {
+        setProjects(ps)
+        const m = {}
+        for (const p of ps) {
+          try { m[p.id] = (await api.progress(p.id)).progress_percent } catch { m[p.id] = 0 }
+        }
+        setProg(m)
+      })
+      .catch((e) => setError(e.message))
   }, [companyId])
 
   const create = async (e) => {
     e.preventDefault()
     setError('')
     try {
-      const p = await api.createProject({ company_id: companyId, name })
+      const p = await api.createProject({ company_id: companyId, name, client: client || null })
       setProjects([...projects, p])
+      setProg({ ...prog, [p.id]: 0 })
       setName('')
+      setClient('')
     } catch (err) {
       setError(err.message)
     }
   }
 
   return (
-    <div style={{ fontFamily: 'system-ui', padding: 32, maxWidth: 800 }}>
-      <h1>OBRA360 — Obras</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <label>
-        Empresa:{' '}
-        <select value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
-          {companies.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-      </label>
-      <form onSubmit={create} style={{ margin: '16px 0', display: 'flex', gap: 8 }}>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre de la obra"
-          required
-          style={{ flex: 1, padding: 8 }}
-        />
-        <button type="submit">Crear obra</button>
-      </form>
-      <ul>
+    <div>
+      <h1 className="page-title">Obras</h1>
+      <p className="page-sub">Selecciona la empresa y gestiona sus proyectos.</p>
+      {error && <p className="err">{error}</p>}
+      <div className="card">
+        <div className="row">
+          <label>Empresa:{' '}
+            <select value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <form onSubmit={create} className="row" style={{ marginTop: 12 }}>
+          <input value={name} onChange={(e) => setName(e.target.value)}
+            placeholder="Nombre de la obra" required style={{ flex: 2, minWidth: 180 }} />
+          <input value={client} onChange={(e) => setClient(e.target.value)}
+            placeholder="Cliente (opcional)" style={{ flex: 1, minWidth: 140 }} />
+          <button type="submit">+ Crear obra</button>
+        </form>
+      </div>
+      <div className="grid">
         {projects.map((p) => (
-          <li key={p.id}>
-            <Link to={`/projects/${p.id}`}>{p.name}</Link>
-            {' '}— {p.status} {p.budget ? `— $${p.budget}` : ''}
-          </li>
+          <Link key={p.id} to={`/projects/${p.id}`} className="proj">
+            <span className="t">{p.name}</span>
+            <span className="m">{p.client || 'Sin cliente'}{p.location ? ` · ${p.location}` : ''}</span>
+            <span><span className={`badge ${p.status}`}>{p.status}</span></span>
+            <div className="pbar"><div style={{ width: `${prog[p.id] || 0}%` }} /></div>
+            <span className="m">Avance {prog[p.id] ?? 0}%</span>
+          </Link>
         ))}
-      </ul>
-      {!projects.length && <p>Sin obras. Crea la primera.</p>}
+      </div>
+      {!projects.length && <p style={{ color: '#64748b' }}>Sin obras para esta empresa.</p>}
     </div>
   )
 }

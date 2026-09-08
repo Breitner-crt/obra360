@@ -25,4 +25,12 @@ export const api = {
     req(`/api/v1/activities/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteActivity: (id) => req(`/api/v1/activities/${id}`, { method: 'DELETE' }),
   progress: (projectId) => req(`/api/v1/projects/${projectId}/progress`),
+  dependencies: (projectId) => req(`/api/v1/dependencies/?project_id=${projectId}`),
+  createDependency: (data) =>
+    req('/api/v1/dependencies/', { method: 'POST', body: JSON.stringify(data) }),
+  login: (data) =>
+    req('/api/v1/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+  register: (data) =>
+    req('/api/v1/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+  authStatus: () => req('/api/v1/auth/status'),
 }

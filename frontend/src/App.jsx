@@ -1,34 +1,22 @@
-import { useEffect, useState } from 'react'
-import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import Layout from './components/Layout.jsx'
+import Dashboard from './pages/Dashboard.jsx'
 import Projects from './pages/Projects.jsx'
 import ProjectDetail from './pages/ProjectDetail.jsx'
-
-function Health() {
-  const [health, setHealth] = useState('verificando...')
-  useEffect(() => {
-    fetch('/api/v1/check/')
-      .then((r) => r.json())
-      .then((d) => setHealth(d.message || 'OK'))
-      .catch(() => setHealth('backend no disponible (inicia uvicorn en :8000)'))
-  }, [])
-  return <p style={{ color: '#64748b', fontSize: 13 }}>Backend: {health}</p>
-}
+import { Login, Register } from './pages/Auth.jsx'
 
 export default function App() {
   return (
     <BrowserRouter>
-      <div style={{ fontFamily: 'system-ui' }}>
-        <nav style={{ padding: '12px 32px', borderBottom: '1px solid #e2e8f0' }}>
-          <Link to="/" style={{ fontWeight: 700, textDecoration: 'none' }}>OBRA360</Link>
-        </nav>
-        <Routes>
-          <Route path="/" element={<Projects />} />
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/obras" element={<Projects />} />
           <Route path="/projects/:id" element={<ProjectDetail />} />
-        </Routes>
-        <footer style={{ padding: '12px 32px' }}>
-          <Health />
-        </footer>
-      </div>
+          <Route path="/login" element={<Login />} />
+          <Route path="/registro" element={<Register />} />
+        </Route>
+      </Routes>
     </BrowserRouter>
   )
 }
