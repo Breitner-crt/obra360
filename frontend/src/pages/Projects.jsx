@@ -9,6 +9,8 @@ export default function Projects() {
   const [prog, setProg] = useState({})
   const [name, setName] = useState('')
   const [client, setClient] = useState('')
+  const [companyName, setCompanyName] = useState('')
+  const [companyRuc, setCompanyRuc] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -46,28 +48,67 @@ export default function Projects() {
     }
   }
 
+  const createCompany = async (e) => {
+    e.preventDefault()
+    setError('')
+    try {
+      const c = await api.createCompany({ name: companyName, ruc: companyRuc || null })
+      const next = [...companies, c]
+      setCompanies(next)
+      setCompanyId(c.id)
+      setCompanyName('')
+      setCompanyRuc('')
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   return (
     <div>
       <h1 className="page-title">Obras</h1>
       <p className="page-sub">Selecciona la empresa y gestiona sus proyectos.</p>
       {error && <p className="err">{error}</p>}
-      <div className="card">
-        <div className="row">
-          <label>Empresa:{' '}
-            <select value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
-              {companies.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </label>
+      {companies.length === 0 && (
+        <div className="card">
+          <h3>Crea tu primera empresa</h3>
+          <p style={{ color: '#64748b' }}>Sin empresa no se pueden crear obras.</p>
+          <form onSubmit={createCompany} className="row" style={{ marginTop: 12 }}>
+            <input value={companyName} onChange={(e) => setCompanyName(e.target.value)}
+              placeholder="Nombre de la empresa" required style={{ flex: 2, minWidth: 180 }} />
+            <input value={companyRuc} onChange={(e) => setCompanyRuc(e.target.value)}
+              placeholder="RUC (opcional)" style={{ flex: 1, minWidth: 140 }} />
+            <button type="submit">+ Crear empresa</button>
+          </form>
         </div>
-        <form onSubmit={create} className="row" style={{ marginTop: 12 }}>
-          <input value={name} onChange={(e) => setName(e.target.value)}
-            placeholder="Nombre de la obra" required style={{ flex: 2, minWidth: 180 }} />
-          <input value={client} onChange={(e) => setClient(e.target.value)}
-            placeholder="Cliente (opcional)" style={{ flex: 1, minWidth: 140 }} />
-          <button type="submit">+ Crear obra</button>
-        </form>
+      )}
+      <div className="card">
+        {companies.length > 0 && (
+          <>
+            <div className="row">
+              <label>Empresa:{' '}
+                <select value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
+                  {companies.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <form onSubmit={create} className="row" style={{ marginTop: 12 }}>
+              <input value={name} onChange={(e) => setName(e.target.value)}
+                placeholder="Nombre de la obra" required style={{ flex: 2, minWidth: 180 }} />
+              <input value={client} onChange={(e) => setClient(e.target.value)}
+                placeholder="Cliente (opcional)" style={{ flex: 1, minWidth: 140 }} />
+              <button type="submit">+ Crear obra</button>
+            </form>
+            <form onSubmit={createCompany} className="row" style={{ marginTop: 12 }}>
+              <input value={companyName} onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="Nueva empresa" required style={{ flex: 2, minWidth: 180 }} />
+              <input value={companyRuc} onChange={(e) => setCompanyRuc(e.target.value)}
+                placeholder="RUC (opcional)" style={{ flex: 1, minWidth: 140 }} />
+              <button type="submit" className="ghost">+ Empresa</button>
+            </form>
+          </>
+        )}
       </div>
       <div className="grid">
         {projects.map((p) => (
