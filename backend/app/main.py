@@ -1,6 +1,5 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
 
 from app.api.v1 import api_router
 
@@ -81,33 +80,5 @@ async def health_check():
         "user_id": user.id if user else None
     }
 
-@app.get("/api/v1/me")
-async def get_me(
-    user = Depends(get_current_user)
-):
-    """
-    Endpoint para obtener la información del usuario actual.
-    Requiere autenticación via Supabase session.
-    """
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="No autenticado"
-        )
-    
-    from supabase import create_client
-    import os
-    supabase_url = os.getenv("SUPABASE_URL")
-    supabase_anon_key = os.getenv("SUPABASE_ANON_KEY")
-    supabase = create_client(supabase_url, supabase_anon_key)
-    
-    db_user = supabase.table("users").select("*").eq("id", user.id).single().execute()
-    
-    return {
-        "id": user.id,
-        "email": user.email,
-        "name": user.user_metadata.get("name") if user.user_metadata else None,
-        "phone": user.user_metadata.get("phone") if user.user_metadata else None,
-        "company_id": db_user.data.get("company_id") if db_user.data else None,
-        "role": db_user.data.get("role") if db_user.data else "supervisor"
-    }
+# NOTA: el endpoint de usuario actual vive en app/api/v1/auth.py como
+# GET /api/v1/auth/me (se eliminó el duplicado GET /api/v1/me que estaba aquí).
