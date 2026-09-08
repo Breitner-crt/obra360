@@ -1,0 +1,3 @@
+# Vercel instala dependencias Python desde la raiz.
+# Reutiliza las del backend oficial FastAPI.
+-r backend/requirements.txt

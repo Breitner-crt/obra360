@@ -6,9 +6,13 @@ import uuid
 from supabase import create_client, Client
 from pydantic import BaseModel
 
-# Configuración Supabase
-SUPABASE_URL = "SUPABASE_URL_FROM_ENV"
-SUPABASE_ANON_KEY = "SUPABASE_ANON_KEY_FROM_ENV"
+# Configuración Supabase (desde entorno, sin hardcodear)
+import os
+from app.core.config import SUPABASE_URL, SUPABASE_ANON_KEY
+
+if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+    raise RuntimeError("Faltan SUPABASE_URL / SUPABASE_ANON_KEY en el .env")
+
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])

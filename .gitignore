@@ -14,12 +14,23 @@ ENV/
 # Secrets and credentials
 *.env.local
 *.env.*.local
+legacy-express-server/.env
+frontend/_server/.env
 
 # Vercel
 .vercel/
 
 # Database
-supabase/seed.sql  # Opcional, si no quieres subir datos de seed
+supabase/seed.sql
+
+# Node
+node_modules/
+frontend/node_modules/
+legacy-express-server/node_modules/
+frontend/dist/
+legacy-express-server/package-lock.json
+frontend/package-lock.json
 
 # OS
 .DS_Store
+Thumbs.db

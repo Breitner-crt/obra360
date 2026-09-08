@@ -1,7 +1,12 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+# Carga .env desde la raiz del proyecto (C:\OBRA360\.env)
+# aunque uvicorn se ejecute desde backend/
+ROOT_DIR = Path(__file__).resolve().parents[3]
+load_dotenv(ROOT_DIR / ".env")
+load_dotenv()  # fallback a .env local / variables Vercel
 
 # Supabase Configuration
 SUPABASE_URL = os.getenv("SUPABASE_URL")

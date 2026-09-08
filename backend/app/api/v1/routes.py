@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -12,7 +13,7 @@ from app.schemas.company import (
 )
 from app.models.company import Company, User, Project
 
-router = APIRouter(prefix="/v1", tags=["Phase 1: Auth + Companies + Projects"])
+router = APIRouter(tags=["Phase 1: Companies + Projects"])
 
 
 # --- COMPANIES ENDPOINTS ---

@@ -6,11 +6,12 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      // Backend oficial FastAPI (uvicorn en puerto 8000).
+      // El servidor Express legacy (puerto 4000) quedo archivado en /legacy-express-server.
       '/api': {
-        target: 'http://localhost:4000',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        secure: false
       }
     }
   },

@@ -2,8 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from app.api.v1.routes import api_router
-from app.api.v1.auth import router as auth_router
+from app.api.v1 import api_router
 
 app = FastAPI(
     title="OBRA360 API",
@@ -16,15 +15,13 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods["*"],
-    allow_headers["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# API routes (Phase 1: Companies, Users, Projects)
+# API routes (Phase 1: Companies, Users, Projects + Auth)
+# api_router ya incluye routes + auth, se monta una sola vez en /api/v1
 app.include_router(api_router, prefix="/api/v1")
-
-# Authentication routes (Supabase Auth)
-app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 
 # Dependency: Get current user from Supabase session
 def get_current_user():

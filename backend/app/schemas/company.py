@@ -19,9 +19,9 @@ class CompanyUpdate(BaseModel):
 
 class CompanyInDB(CompanyCreate):
     id: UUID
-    created_at: datetime
-    updated_at: datetime
-    
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
     class Config:
         from_attributes = True
 
@@ -42,9 +42,9 @@ class UserUpdate(BaseModel):
 
 class UserInDB(UserCreate):
     id: UUID
-    created_at: datetime
-    updated_at: datetime
-    
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
     class Config:
         from_attributes = True
 
@@ -75,9 +75,10 @@ class ProjectUpdate(BaseModel):
 
 class ProjectInDB(ProjectCreate):
     id: UUID
-    created_at: datetime
-    updated_at: datetime
-    
+    wbs_code: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
     class Config:
         from_attributes = True
 
