@@ -8,21 +8,25 @@ const UNITS = ['', 'm', 'm2', 'm3', 'kg', 'und', 'glb', 'hh', 'día', 'mes']
 
 export default function ProjectDetail() {
   const { id } = useParams()
+  const today = new Date().toISOString().slice(0, 10)
   const [tree, setTree] = useState([])
   const [deps, setDeps] = useState([])
+  const [logs, setLogs] = useState([])
   const [progress, setProgress] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [depForm, setDepForm] = useState({ predecessor_id: '', successor_id: '', dep_type: 'FS' })
+  const [logForm, setLogForm] = useState({ activity_id: '', log_date: today, progress_percent: 0, note: '', photo_url: '' })
   const [error, setError] = useState('')
 
   const load = async () => {
     try {
-      const [t, p, d] = await Promise.all([
-        api.activityTree(id), api.progress(id), api.dependencies(id),
+      const [t, p, d, l] = await Promise.all([
+        api.activityTree(id), api.progress(id), api.dependencies(id), api.dailyLogs(id),
       ])
       setTree(t)
       setProgress(p)
       setDeps(d)
+      setLogs(l)
     } catch (e) {
       setError(e.message)
     }
@@ -78,6 +82,31 @@ export default function ProjectDetail() {
     } catch (err) {
       setError(err.message)
     }
+  }
+
+  const createLog = async (e) => {
+    e.preventDefault()
+    setError('')
+    try {
+      await api.createDailyLog({
+        project_id: id,
+        activity_id: logForm.activity_id,
+        log_date: logForm.log_date,
+        progress_percent: Number(logForm.progress_percent),
+        note: logForm.note || null,
+        photo_url: logForm.photo_url || null,
+      })
+      setLogForm({ activity_id: '', log_date: today, progress_percent: 0, note: '', photo_url: '' })
+      load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const removeLog = async (l) => {
+    if (!confirm(`Eliminar parte del ${l.log_date} (${l.progress_percent}%)?`)) return
+    await api.deleteDailyLog(l.id)
+    load()
   }
 
   const setStatus = async (a, status) => {
@@ -267,6 +296,65 @@ export default function ProjectDetail() {
           </table>
         </div>
         {!tree.length && <p style={{ color: '#64748b' }}>Sin actividades. Agrega la primera arriba.</p>}
+      </div>
+
+      <div className="card">
+        <h3>Parte diario de campo ({logs.length})</h3>
+        <p style={{ color: '#64748b', fontSize: 13 }}>
+          El supervisor reporta % de avance por actividad. Al guardar se actualiza el progreso,
+          el Gantt, la obra y el panel automáticamente.
+        </p>
+        <form onSubmit={createLog} className="row" style={{ marginBottom: 12, alignItems: 'flex-end' }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
+            Actividad
+            <select value={logForm.activity_id}
+              onChange={(e) => setLogForm({ ...logForm, activity_id: e.target.value })} required
+              style={{ minWidth: 200 }}>
+              <option value="">Selecciona…</option>
+              {all.map((a) => <option key={a.id} value={a.id}>{a.wbs_code} {a.name}</option>)}
+            </select>
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
+            Fecha
+            <input type="date" value={logForm.log_date}
+              onChange={(e) => setLogForm({ ...logForm, log_date: e.target.value })} required />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
+            Avance %
+            <input type="number" min="0" max="100" value={logForm.progress_percent}
+              onChange={(e) => setLogForm({ ...logForm, progress_percent: e.target.value })}
+              style={{ width: 90 }} required />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
+            Nota de campo
+            <input value={logForm.note} onChange={(e) => setLogForm({ ...logForm, note: e.target.value })}
+              placeholder="Ej. Se vaciaron 12 m3" style={{ minWidth: 200 }} />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
+            Foto (URL)
+            <input value={logForm.photo_url} onChange={(e) => setLogForm({ ...logForm, photo_url: e.target.value })}
+              placeholder="https://…" style={{ minWidth: 180 }} />
+          </label>
+          <button type="submit">Registrar avance</button>
+        </form>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="tbl">
+            <thead><tr><th>Fecha</th><th>Actividad</th><th>Avance</th><th>Nota</th><th>Foto</th><th></th></tr></thead>
+            <tbody>
+              {logs.map((l) => (
+                <tr key={l.id}>
+                  <td style={{ whiteSpace: 'nowrap' }}>{fmtFecha(l.log_date)}</td>
+                  <td>{byId[l.activity_id]?.wbs_code} {byId[l.activity_id]?.name || '—'}</td>
+                  <td><span className="badge">{l.progress_percent}%</span></td>
+                  <td style={{ maxWidth: 280 }}>{l.note || '—'}</td>
+                  <td>{l.photo_url ? <a href={l.photo_url} target="_blank" rel="noreferrer">Ver</a> : '—'}</td>
+                  <td><button className="small danger" onClick={() => removeLog(l)}>Eliminar</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {!logs.length && <p style={{ color: '#64748b' }}>Sin partes todavía. Registra el primer avance arriba.</p>}
       </div>
 
       <div className="card">

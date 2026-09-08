@@ -64,4 +64,9 @@ export const api = {
   register: (data) =>
     req('/api/v1/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   authStatus: () => req('/api/v1/auth/status'),
+  dailyLogs: (projectId, activityId) =>
+    req(`/api/v1/daily-logs/?project_id=${projectId}${activityId ? `&activity_id=${activityId}` : ''}`),
+  createDailyLog: (data) =>
+    req('/api/v1/daily-logs/', { method: 'POST', body: JSON.stringify(data) }),
+  deleteDailyLog: (id) => req(`/api/v1/daily-logs/${id}`, { method: 'DELETE' }),
 }
