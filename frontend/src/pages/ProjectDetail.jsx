@@ -101,30 +101,61 @@ export default function ProjectDetail() {
   }
   const costOf = (n) => (Number(n.quantity) || 0) * (Number(n.unit_cost) || 0)
 
-  const renderNode = (n, depth = 0) => (
-    <div key={n.id}>
-      <div className="row" style={{ padding: '6px 0 6px ' + depth * 24 + 'px', borderBottom: '1px solid #f1f5f9' }}>
-        <span style={{ color: '#64748b', minWidth: 56 }}>{n.wbs_code}</span>
-        <strong style={{ minWidth: 160 }}>{n.name}</strong>
-        <span className={`badge ${n.status}`}>{n.status}</span>
-        <span style={{ fontSize: 13 }}>{n.progress_percent}%</span>
-        <span style={{ fontSize: 12, color: '#64748b' }}>
-          {n.start_date || '—'} → {n.end_date || '—'}
-        </span>
-        <span style={{ fontSize: 12, minWidth: 48 }} title="Duración en días (tiempo, alimenta el Gantt)">{durationOf(n)}</span>
-        <span style={{ fontSize: 12, minWidth: 90 }} title="Metrado: cantidad × unidad">
-          {(Number(n.quantity) || 0) ? `${n.quantity} ${n.unit || ''}`.trim() : '—'}
-        </span>
-        <span style={{ fontSize: 12, minWidth: 90 }} title="Costo total = cantidad × PU">
-          {costOf(n) ? `S/ ${costOf(n).toLocaleString('es-PE', { minimumFractionDigits: 2 })}` : '—'}
-        </span>
-        <button className="small ghost" onClick={() => setStatus(n, 'en_progreso')}>Iniciar</button>
-        <button className="small ghost" onClick={() => setStatus(n, 'completada')}>Completar</button>
+  // Progreso efectivo jerárquico (igual que backend): padre = promedio ponderado de hijas
+  const kidsOf = {}
+  for (const a of all) {
+    const key = a.parent_id || '__root__'
+    ;(kidsOf[key] = kidsOf[key] || []).push(a)
+  }
+  const effCache = {}
+  const effOf = (n, seen = new Set()) => {
+    if (effCache[n.id] !== undefined) return effCache[n.id]
+    if (seen.has(n.id)) return Number(n.progress_percent) || 0
+    seen.add(n.id)
+    const kids = all.filter((a) => a.parent_id === n.id)
+    if (!kids.length) return Number(n.progress_percent) || 0
+    const ws = kids.map((k) => Number(k.weight_percent) || 0)
+    const vals = kids.map((k) => effOf(k, new Set(seen)))
+    const v = ws.reduce((s, w) => s + w, 0) > 0
+      ? vals.reduce((s, x, i) => s + x * ws[i], 0) / ws.reduce((s, w) => s + w, 0)
+      : vals.reduce((s, x) => s + x, 0) / vals.length
+    effCache[n.id] = v
+    return v
+  }
+
+  // Suma de ponderaciones hermanas del padre seleccionado en el form
+  const siblingSum = all
+    .filter((a) => (a.parent_id || '') === (form.parent_id || ''))
+    .reduce((s, a) => s + (Number(a.weight_percent) || 0), 0)
+
+  const renderRows = (nodes, depth = 0) => nodes.flatMap((n) => [
+    <tr key={n.id}>
+      <td style={{ color: '#64748b', whiteSpace: 'nowrap' }}>{n.wbs_code}</td>
+      <td style={{ paddingLeft: 8 + depth * 20 }}><strong>{n.name}</strong></td>
+      <td><span className={`badge ${n.status}`}>{n.status}</span></td>
+      <td title="Ponderación dentro de su padre (las hijas deben sumar 100%)">{Number(n.weight_percent) || 0}%</td>
+      <td title={n.children?.length ? 'Calculado del promedio ponderado de sus hijas' : 'Avance propio'}>
+        {n.children?.length ? `${Math.round(effOf(n))}%` : `${n.progress_percent}%`}
+      </td>
+      <td style={{ whiteSpace: 'nowrap', color: '#64748b' }}>{n.start_date || '—'} → {n.end_date || '—'}</td>
+      <td title="Duración en días (tiempo, alimenta el Gantt)">{durationOf(n)}</td>
+      <td title="Metrado: cantidad × unidad" style={{ whiteSpace: 'nowrap' }}>
+        {(Number(n.quantity) || 0) ? `${n.quantity} ${n.unit || ''}`.trim() : '—'}
+      </td>
+      <td style={{ whiteSpace: 'nowrap' }}>
+        {(Number(n.unit_cost) || 0) ? `S/ ${Number(n.unit_cost).toLocaleString('es-PE', { minimumFractionDigits: 2 })}` : '—'}
+      </td>
+      <td style={{ whiteSpace: 'nowrap' }} title="Costo total = cantidad × PU">
+        {costOf(n) ? `S/ ${costOf(n).toLocaleString('es-PE', { minimumFractionDigits: 2 })}` : '—'}
+      </td>
+      <td style={{ whiteSpace: 'nowrap' }}>
+        <button className="small ghost" onClick={() => setStatus(n, 'en_progreso')}>Iniciar</button>{' '}
+        <button className="small ghost" onClick={() => setStatus(n, 'completada')}>Completar</button>{' '}
         <button className="small danger" onClick={() => remove(n)}>Eliminar</button>
-      </div>
-      {n.children?.map((c) => renderNode(c, depth + 1))}
-    </div>
-  )
+      </td>
+    </tr>,
+    ...renderRows(n.children || [], depth + 1),
+  ])
 
   return (
     <div>
@@ -160,6 +191,9 @@ export default function ProjectDetail() {
                 <option key={a.id} value={a.id}>{a.wbs_code} {a.name}</option>
               ))}
             </select>
+            <span style={{ fontSize: 11, color: siblingSum === 100 ? '#16a34a' : '#b45309' }}>
+              Hijas de este nivel suman {siblingSum}%{siblingSum === 100 ? ' ✓' : ' (deben sumar 100%)'}
+            </span>
           </label>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
             Inicio
@@ -203,18 +237,26 @@ export default function ProjectDetail() {
           </label>
           <button type="submit">Agregar</button>
         </form>
-        <div className="row" style={{ padding: '6px 0', borderBottom: '2px solid #e2e8f0', fontSize: 12, color: '#64748b', fontWeight: 600 }}>
-          <span style={{ minWidth: 56 }}>WBS</span>
-          <span style={{ minWidth: 160 }}>Actividad</span>
-          <span>Estado</span>
-          <span>Avance</span>
-          <span>Fechas</span>
-          <span style={{ minWidth: 48 }}>Durac.</span>
-          <span style={{ minWidth: 90 }}>Metrado</span>
-          <span style={{ minWidth: 90 }}>Costo</span>
-          <span>Acciones</span>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>WBS</th>
+                <th>Actividad</th>
+                <th>Estado</th>
+                <th title="Ponderación dentro de su padre">Pond. %</th>
+                <th>Avance</th>
+                <th>Fechas</th>
+                <th>Durac.</th>
+                <th>Metrado</th>
+                <th>PU</th>
+                <th>Costo total</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>{renderRows(tree)}</tbody>
+          </table>
         </div>
-        {tree.map((n) => renderNode(n))}
         {!tree.length && <p style={{ color: '#64748b' }}>Sin actividades. Agrega la primera arriba.</p>}
       </div>
 

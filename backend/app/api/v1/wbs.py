@@ -209,7 +209,7 @@ async def delete_dependency(dependency_id: UUID, db: Session = Depends(get_db)):
     return {"success": True, "message": "Dependencia eliminada"}
 
 
-# --- PROJECT PROGRESS (avance ponderado por weight_percent) ---
+# --- PROJECT PROGRESS (jerárquico: las hijas suman 100% del padre) ---
 @router.get("/projects/{project_id}/progress", response_model=ProjectProgress)
 async def project_progress(project_id: UUID, db: Session = Depends(get_db)):
     rows = db.query(Activity).filter(
@@ -219,13 +219,44 @@ async def project_progress(project_id: UUID, db: Session = Depends(get_db)):
     ).all()
     total = len(rows)
     completed = sum(1 for a in rows if a.status == "completada")
-    weights = [float(a.weight_percent or 0) for a in rows]
     if total == 0:
-        progress = 0.0
-    elif sum(weights) > 0:
-        progress = sum(a.progress_percent * w for a, w in zip(rows, weights)) / sum(weights)
+        return ProjectProgress(
+            project_id=project_id, progress_percent=0.0,
+            total_activities=0, completed_activities=0,
+        )
+
+    by_id = {a.id: a for a in rows}
+    children: dict = {a.id: [] for a in rows}
+    roots = []
+    for a in rows:
+        if a.parent_id and a.parent_id in by_id:
+            children[a.parent_id].append(a)
+        else:
+            roots.append(a)
+
+    def _eff(a, seen=None) -> float:
+        """Progreso efectivo: hoja = su progreso; padre = promedio ponderado de hijas."""
+        seen = seen or set()
+        if a.id in seen:
+            return float(a.progress_percent or 0)
+        seen.add(a.id)
+        kids = children.get(a.id, [])
+        if not kids:
+            return float(a.progress_percent or 0)
+        ws = [float(k.weight_percent or 0) for k in kids]
+        vals = [_eff(k, set(seen)) for k in kids]
+        if sum(ws) > 0:
+            return sum(v * w for v, w in zip(vals, ws)) / sum(ws)
+        return sum(vals) / len(vals)
+
+    if not roots:  # seguridad ante huérfanos
+        roots = rows
+    rws = [float(r.weight_percent or 0) for r in roots]
+    rvals = [_eff(r) for r in roots]
+    if sum(rws) > 0:
+        progress = sum(v * w for v, w in zip(rvals, rws)) / sum(rws)
     else:
-        progress = sum(a.progress_percent for a in rows) / total
+        progress = sum(rvals) / len(rvals)
     return ProjectProgress(
         project_id=project_id,
         progress_percent=round(progress, 2),
