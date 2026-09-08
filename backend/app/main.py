@@ -32,6 +32,30 @@ async def unhandled_exception_handler(request, exc):
     # Expone la causa real del 500 para poder diagnosticar desde el frontend/logs
     return JSONResponse(status_code=500, content={"detail": f"{type(exc).__name__}: {exc}"})
 
+
+@app.get("/api/v1/debug/db-info")
+async def db_info():
+    """Diagnóstico sin exponer claves: qué host/puerto está usando el backend."""
+    import os
+    from urllib.parse import urlsplit
+
+    pooler_set = bool(os.getenv("DATABASE_POOLER_URL") or os.getenv("SUPABASE_DB_POOLER_URL"))
+    db_set = bool(os.getenv("DATABASE_URL"))
+    try:
+        from app.core.database import SQLALCHEMY_DATABASE_URL as url
+
+        parts = urlsplit(url)
+        return {
+            "host": parts.hostname,
+            "port": parts.port,
+            "is_pooler": (parts.port == 6543) or ("pooler.supabase" in (parts.hostname or "")),
+            "has_pooler_env": pooler_set,
+            "has_database_url_env": db_set,
+            "vercel": bool(os.getenv("VERCEL")),
+        }
+    except Exception as e:
+        return {"error": f"{type(e).__name__}: {e}", "has_pooler_env": pooler_set}
+
 # Dependency: Get current user from Supabase session
 def get_current_user():
     """
