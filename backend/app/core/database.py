@@ -3,6 +3,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.pool import NullPool
 
 # Carga .env aquí también: este módulo crea el engine al importarse y puede
 # cargarse antes que app.core.config (que también carga el .env).
@@ -17,11 +18,18 @@ SQLALCHEMY_DATABASE_URL = os.getenv(
     "postgresql://postgres:postgres@db.obra360.supabase.com:5432/postgres"
 )
 
+# En serverless (Vercel) no se reutilizan conexiones entre invocaciones:
+# NullPool evita agotar el pool de Supabase.
+_engine_kwargs = (
+    {"poolclass": NullPool}
+    if os.getenv("VERCEL")
+    else {"pool_size": 5, "max_overflow": 10}
+)
+
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
+    **_engine_kwargs,
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
