@@ -1,3 +1,10 @@
 # Vercel instala dependencias Python desde la raiz.
-# Reutiliza las del backend oficial FastAPI.
--r backend/requirements.txt
+# Duplica backend/requirements.txt (el parser de Vercel no acepta includes -r).
+fastapi>=0.110,<0.120
+uvicorn[standard]>=0.29
+sqlalchemy>=2.0
+pydantic>=2.6
+email-validator>=2.0
+python-dotenv>=1.0
+supabase>=2.10
+psycopg2-binary>=2.9
