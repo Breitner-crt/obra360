@@ -1,5 +1,10 @@
--- SQL para crear tablas en Supabase PostgreSQL
--- Ejecutar en: Supabase > SQL Editor
+-- ARCHIVADO 2026-09-08: esquema del backend Express legacy (JWT + bcrypt,
+-- tabla users con email/password). NO aplicar sobre la base oficial.
+-- Esquema oficial: supabase/migrations/20240101_initial.sql
+-- (users vinculados a auth.users de Supabase Auth, sin columna password).
+-- Se conserva solo como referencia para migrar datos si hiciera falta.
+--
+-- SQL original para crear tablas en Supabase PostgreSQL:
 
 -- 1. Crear tabla users (almacena usuarios registrados con hash de contraseña)
 CREATE TABLE IF NOT EXISTS users (
