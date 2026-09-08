@@ -71,9 +71,17 @@ button.small { padding: 5px 10px; font-size: 12px; }
 .err { color: var(--red); background: #fee2e2; padding: 10px 14px; border-radius: 8px; }
 
 /* Tables */
-table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
-table.tbl th { text-align: left; color: var(--muted); font-weight: 600; border-bottom: 2px solid var(--border); padding: 8px; }
-table.tbl td { border-bottom: 1px solid var(--border); padding: 8px; }
+table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff;
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+table.tbl thead tr { background: #f8fafc; }
+table.tbl th { text-align: left; color: var(--muted); font-weight: 700; font-size: 12px;
+  text-transform: uppercase; letter-spacing: .04em;
+  border-bottom: 2px solid var(--border); padding: 10px 8px; white-space: nowrap; }
+table.tbl td { border-bottom: 1px solid var(--border); padding: 8px; vertical-align: middle; }
+table.tbl th + th, table.tbl td + td { border-left: 1px solid var(--border); }
+table.tbl tbody tr:nth-child(even) { background: #f8fafc; }
+table.tbl tbody tr:hover { background: #eff6ff; }
+table.tbl tbody tr:last-child td { border-bottom: none; }
 
 @media (max-width: 760px) {
   .sidebar { width: 64px; }

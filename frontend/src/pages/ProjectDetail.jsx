@@ -101,6 +101,15 @@ export default function ProjectDetail() {
   }
   const costOf = (n) => (Number(n.quantity) || 0) * (Number(n.unit_cost) || 0)
 
+  const fmtFecha = (s) => {
+    if (!s) return '—'
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s)
+    if (m) return `${m[3]}/${m[2]}/${m[1]}`
+    const d = new Date(s)
+    if (isNaN(d)) return s
+    return d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  }
+
   // Progreso efectivo jerárquico (igual que backend): padre = promedio ponderado de hijas
   const kidsOf = {}
   for (const a of all) {
@@ -137,7 +146,7 @@ export default function ProjectDetail() {
       <td title={n.children?.length ? 'Calculado del promedio ponderado de sus hijas' : 'Avance propio'}>
         {n.children?.length ? `${Math.round(effOf(n))}%` : `${n.progress_percent}%`}
       </td>
-      <td style={{ whiteSpace: 'nowrap', color: '#64748b' }}>{n.start_date || '—'} → {n.end_date || '—'}</td>
+      <td style={{ whiteSpace: 'nowrap', color: '#64748b' }}>{fmtFecha(n.start_date)} → {fmtFecha(n.end_date)}</td>
       <td title="Duración en días (tiempo, alimenta el Gantt)">{durationOf(n)}</td>
       <td title="Metrado: cantidad × unidad" style={{ whiteSpace: 'nowrap' }}>
         {(Number(n.quantity) || 0) ? `${n.quantity} ${n.unit || ''}`.trim() : '—'}
