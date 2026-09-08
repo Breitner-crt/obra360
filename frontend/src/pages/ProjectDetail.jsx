@@ -119,24 +119,47 @@ export default function ProjectDetail() {
 
       <div className="card">
         <h3>Actividades</h3>
-        <form onSubmit={create} className="row" style={{ marginBottom: 12 }}>
-          <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="Nombre" required style={{ minWidth: 200 }} />
-          <select value={form.parent_id} onChange={(e) => setForm({ ...form, parent_id: e.target.value })}>
-            <option value="">Sin padre (raíz)</option>
-            {all.map((a) => (
-              <option key={a.id} value={a.id}>{a.wbs_code} {a.name}</option>
-            ))}
-          </select>
-          <input type="date" value={form.start_date}
-            onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
-          <input type="date" value={form.end_date}
-            onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
-          <input type="number" min="0" max="100" value={form.weight_percent}
-            onChange={(e) => setForm({ ...form, weight_percent: e.target.value })}
-            title="Peso %" style={{ width: 84 }} />
+        <form onSubmit={create} className="row" style={{ marginBottom: 12, alignItems: 'flex-end' }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
+            Nombre
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="Nombre" required style={{ minWidth: 200 }} />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
+            Padre
+            <select value={form.parent_id} onChange={(e) => setForm({ ...form, parent_id: e.target.value })}>
+              <option value="">Sin padre (raíz)</option>
+              {all.map((a) => (
+                <option key={a.id} value={a.id}>{a.wbs_code} {a.name}</option>
+              ))}
+            </select>
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
+            Inicio
+            <input type="date" value={form.start_date}
+              onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
+            Fin
+            <input type="date" value={form.end_date}
+              onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b' }}>
+            Peso %
+            <input type="number" min="0" max="100" value={form.weight_percent}
+              onChange={(e) => setForm({ ...form, weight_percent: e.target.value })}
+              title="Peso %" style={{ width: 84 }} />
+          </label>
           <button type="submit">Agregar</button>
         </form>
+        <div className="row" style={{ padding: '6px 0', borderBottom: '2px solid #e2e8f0', fontSize: 12, color: '#64748b', fontWeight: 600 }}>
+          <span style={{ minWidth: 56 }}>WBS</span>
+          <span style={{ minWidth: 160 }}>Actividad</span>
+          <span>Estado</span>
+          <span>Avance</span>
+          <span>Fechas</span>
+          <span>Acciones</span>
+        </div>
         {tree.map((n) => renderNode(n))}
         {!tree.length && <p style={{ color: '#64748b' }}>Sin actividades. Agrega la primera arriba.</p>}
       </div>
