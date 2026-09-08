@@ -10,10 +10,13 @@ from pydantic import BaseModel
 import os
 from app.core.config import SUPABASE_URL, SUPABASE_ANON_KEY
 
-if not SUPABASE_URL or not SUPABASE_ANON_KEY:
-    raise RuntimeError("Faltan SUPABASE_URL / SUPABASE_ANON_KEY en el .env")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+def _get_supabase():
+    if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Faltan SUPABASE_URL / SUPABASE_ANON_KEY en el servidor (revisa .env o Variables de Vercel)",
+        )
+    return create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -49,6 +52,7 @@ async def login(user_credentials: UserLogin):
     Returns user JWT token and info.
     """
     try:
+        supabase = _get_supabase()
         # Authenticate with Supabase
         auth_response = supabase.auth.sign_in_with_password({
             "email": user_credentials.email,
@@ -70,6 +74,8 @@ async def login(user_credentials: UserLogin):
         
         return user_info
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -91,7 +97,7 @@ async def register(user_data: UserRegister):
                 detail="Las contraseñas no coinciden"
             )
         
-        auth_response = supabase.auth.sign_up({
+        auth_response = _get_supabase().auth.sign_up({
             "email": user_data.email,
             "password": user_data.password,
             "user_metadata": {
@@ -111,6 +117,8 @@ async def register(user_data: UserRegister):
         
         return user_info
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -125,7 +133,7 @@ async def logout():
     Cerrar sesión actual.
     """
     try:
-        supabase.auth.sign_out()
+        _get_supabase().auth.sign_out()
         return {"message": "Sesión cerrada correctamente"}
     except Exception as e:
         raise HTTPException(
@@ -144,7 +152,7 @@ async def get_current_user(
     """
     try:
         # Get current user from session
-        user = supabase.auth.get_user()
+        user = _get_supabase().auth.get_user()
         
         if not user.user:
             raise HTTPException(
@@ -186,6 +194,7 @@ def get_user_company(user_id: str) -> Optional[str]:
     """
     try:
         # Query the users table to find company_id
+        supabase = _get_supabase()
         response = supabase.table("users").select("company_id").eq("id", user_id).single().execute()
         if response.data:
             return response.data.get("company_id")
@@ -201,7 +210,7 @@ async def auth_status():
     Verificar si hay sesión activa.
     """
     try:
-        user = supabase.auth.get_user()
+        user = _get_supabase().auth.get_user()
         if user.user:
             return {"authenticated": True, "user_id": user.user.id}
         return {"authenticated": False}

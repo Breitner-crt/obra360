@@ -1,7 +1,7 @@
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, date
 
 
 # Company schemas
@@ -56,8 +56,8 @@ class ProjectCreate(BaseModel):
     code: Optional[str] = None
     client: Optional[str] = None
     location: Optional[str] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
     budget: Optional[float] = 0
     status: str = "planificación"
 
@@ -67,8 +67,8 @@ class ProjectUpdate(BaseModel):
     code: Optional[str] = None
     client: Optional[str] = None
     location: Optional[str] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
     budget: Optional[float] = None
     status: Optional[str] = None
 

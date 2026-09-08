@@ -1,11 +1,42 @@
+function formatDetail(detail, fallback) {
+  if (!detail) return fallback
+  if (typeof detail === 'string') return detail
+  if (Array.isArray(detail)) {
+    // Errores de validación FastAPI/Pydantic: [{loc, msg, type}]
+    return detail
+      .map((d) => {
+        if (typeof d === 'string') return d
+        if (d && typeof d === 'object') {
+          const loc = Array.isArray(d.loc) ? d.loc.filter((x) => x !== 'body').join('.') : ''
+          const msg = d.msg || d.message || JSON.stringify(d)
+          return loc ? `${loc}: ${msg}` : msg
+        }
+        return String(d)
+      })
+      .join('; ')
+  }
+  if (typeof detail === 'object') {
+    return detail.msg || detail.message || detail.error || JSON.stringify(detail)
+  }
+  return String(detail)
+}
+
 async function req(path, options = {}) {
   const res = await fetch(path, {
     headers: { 'Content-Type': 'application/json' },
     ...options,
   })
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body.detail || `HTTP ${res.status}`)
+    // Vercel/500 a veces devuelve HTML, no JSON
+    const text = await res.text().catch(() => '')
+    let body = {}
+    try {
+      body = text ? JSON.parse(text) : {}
+    } catch {
+      body = {}
+    }
+    const detail = body.detail ?? body.message ?? body.error
+    throw new Error(formatDetail(detail, text.slice(0, 200) || `HTTP ${res.status}`))
   }
   return res.json()
 }

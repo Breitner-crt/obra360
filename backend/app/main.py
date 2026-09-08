@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api.v1 import api_router
 
@@ -22,6 +23,15 @@ app.add_middleware(
 # api_router ya incluye routes + auth, se monta una sola vez en /api/v1
 app.include_router(api_router, prefix="/api/v1")
 
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request, exc):
+    # Preserva HTTPException con su status/detail real
+    if isinstance(exc, HTTPException):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+    # Expone la causa real del 500 para poder diagnosticar desde el frontend/logs
+    return JSONResponse(status_code=500, content={"detail": f"{type(exc).__name__}: {exc}"})
+
 # Dependency: Get current user from Supabase session
 def get_current_user():
     """
@@ -35,6 +45,8 @@ def get_current_user():
         
         supabase_url = os.getenv("SUPABASE_URL")
         supabase_anon_key = os.getenv("SUPABASE_ANON_KEY")
+        if not supabase_url or not supabase_anon_key:
+            return None
         supabase = create_client(supabase_url, supabase_anon_key)
         
         user = supabase.auth.get_user()

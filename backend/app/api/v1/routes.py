@@ -25,7 +25,7 @@ async def create_company(
 ):
     """Crear nueva empresa"""
     import uuid
-    company_id = str(uuid.uuid4())
+    company_id = uuid.uuid4()
     
     db_company = Company(
         id=company_id,
@@ -97,7 +97,7 @@ async def create_user(
 ):
     """Crear nuevo usuario"""
     import uuid
-    user_id = str(uuid.uuid4())
+    user_id = uuid.uuid4()
     
     db_user = User(
         id=user_id,
@@ -151,7 +151,7 @@ async def create_project(
 ):
     """Crear nueva obra/proyecto"""
     import uuid
-    project_id = str(uuid.uuid4())
+    project_id = uuid.uuid4()
     
     db_project = Project(
         id=project_id,
@@ -164,7 +164,7 @@ async def create_project(
         end_date=project_data.end_date,
         budget=project_data.budget,
         status=project_data.status,
-        wbs_code=f"01.{project_id[:8]}"
+        wbs_code=f"01.{str(project_id)[:8]}"
     )
     db.add(db_project)
     db.commit()
